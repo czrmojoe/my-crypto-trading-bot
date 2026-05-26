@@ -8,6 +8,30 @@ import threading
 import schedule
 import time
 import requests
+import ccxt
+
+# สร้างฟังก์ชันเช็คราคา Realtime 
+def monitor_crypto_price():
+    exchange = ccxt.binance() # ดึงข้อมูลจาก Binance
+    target_price = 70000 # ตั้งราคาที่ต้องการให้เตือน
+    alert_fired = False
+
+    while True:
+        try:
+            ticker = exchange.fetch_ticker('BTC/USDT')
+            current_price = ticker['last']
+            
+            # ถ้าราคาพุ่งทะลุแนวต้านที่ตั้งไว้ ให้บอทยิงเตือน
+            if current_price >= target_price and not alert_fired:
+                bot.send_message(MY_CHAT_ID, f"🚨 **ALERT:** ตอนนี้ราคา BTC ทะลุเป้าหมายแล้ว! ราคาปัจจุบัน: ${current_price:,}")
+                alert_fired = True # สั่งล็อกไว้ไม่ให้เตือนซ้ำกวนใจ
+                
+            time.sleep(30) # ให้แอบไปดูราคาทุกๆ 30 วินาที
+        except Exception as e:
+            time.sleep(10)
+
+# เปิดรันระบบเช็คราคาเป็นเบื้องหลัง
+threading.Thread(target=monitor_crypto_price, daemon=True).start()
 
 # --- ลูกเล่นพิเศษ: หลอก Render ให้รันแผนฟรีได้ 24 ชม. ---
 def run_dummy_server():
